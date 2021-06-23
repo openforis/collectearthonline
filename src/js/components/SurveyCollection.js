@@ -690,7 +690,6 @@ class AnswerInput extends React.Component {
     };
 
     resetInputText = () => {
-        console.log(this.defaultVal());
         const matchingNode = this.props.surveyNode.answered
             .find(a => a.answerId === this.props.surveyNode.answers[0].id
                   && a.sampleId === this.props.selectedSampleId);

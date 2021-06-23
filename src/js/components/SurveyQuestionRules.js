@@ -26,7 +26,7 @@ function Question({text}) {
             &quot;{(textIsArray ? truncjoin(text) : truncate(text, 15))}&quot;
             {(textIsArray || text.length >= 15)
                 && (
-                    <span className="tooltip_content" style={{"font-size": "0.8rem"}}>
+                    <span className="tooltip_content" style={{fontSize: "0.8rem"}}>
                         {textIsArray ? text.join(", ") : text}
                     </span>
                 )}
@@ -34,7 +34,7 @@ function Question({text}) {
     );
 }
 
-function EqualToSumRule({questionsText, validSum}) {
+export function EqualToSumRule({questionsText, validSum}) {
     return (
         <div className="d-flex flex-column mb-3">
             <div><strong>Sum of Answers</strong></div>
@@ -43,7 +43,7 @@ function EqualToSumRule({questionsText, validSum}) {
     );
 }
 
-function IncompatibleRule({answerText1, answerText2, questionText1, questionText2}) {
+export function IncompatibleRule({answerText1, answerText2, questionText1, questionText2}) {
     return (
         <div className="d-flex flex-column mb-3">
             <div><strong>Incompatible Answers</strong></div>
@@ -55,7 +55,7 @@ function IncompatibleRule({answerText1, answerText2, questionText1, questionText
     );
 }
 
-function MatchingSumsRule({questionSetText1, questionSetText2}) {
+export function MatchingSumsRule({questionSetText1, questionSetText2}) {
     return (
         <div className="d-flex flex-column mb-3">
             <div><strong>Matching Sums</strong></div>
@@ -66,7 +66,7 @@ function MatchingSumsRule({questionSetText1, questionSetText2}) {
     );
 }
 
-function MinMaxRule({questionsText, min, max}) {
+export function MinMaxRule({questionsText, min, max}) {
     return (
         <div className="d-flex flex-column mb-3">
             <div><strong>Min/Max Values</strong></div>
@@ -75,7 +75,7 @@ function MinMaxRule({questionsText, min, max}) {
     );
 }
 
-function RegexRule({questionsText, regex}) {
+export function RegexRule({questionsText, regex}) {
     return (
         <div className="d-flex flex-column mb-3">
             <div><strong>Text Match</strong></div>

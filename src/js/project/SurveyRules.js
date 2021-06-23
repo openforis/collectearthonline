@@ -1,7 +1,15 @@
 import React, {useContext} from "react";
 
-import {isNumber, sameContents} from "../utils/generalUtils";
+import {isNumber, sameContents, UnicodeIcon} from "../utils/generalUtils";
 import {ProjectContext} from "./constants";
+
+import {
+    EqualToSumRule,
+    IncompatibleRule,
+    MatchingSumsRule,
+    MinMaxRule,
+    RegexRule
+} from "../components/SurveyQuestionRules";
 
 const getNextId = array => array.reduce((maxId, obj) => Math.max(maxId, obj.id), 0) + 1;
 
@@ -27,71 +35,31 @@ export class SurveyRulesList extends React.Component {
 
     // TODO update the remove buttons with SVG
     removeButton = ruleId => (
-        <button
-            className="btn btn-outline-red py-0 px-2 mr-1 font-weight-bold"
+        <span
+            className="btn btn-sm btn-outline-red px-3 mt-0 mr-3 mb-3"
             onClick={() => this.deleteSurveyRule(ruleId)}
-            type="button"
+            title="Delete Rule"
         >
-            X
-        </button>
+            <UnicodeIcon icon="trash"/>
+        </span>
     );
 
-    ruleTypeLabel = {
-        "text-match": "Text Regex Match",
-        "numeric-range": "Numeric Range",
-        "sum-of-answers": "Sum of Answers",
-        "matching-sums": "Matching Sums",
-        "incompatible-answers": "Incompatible Answers"
-    };
-
-    ruleSpecificColumns = {
-        "text-match": ({regex, questionsText}) => (
-            <>
-                <td>Regex: {regex}</td>
-                <td>Questions: {questionsText.toString()}</td>
-            </>
-        ),
-
-        "numeric-range": ({min, max, questionsText}) => (
-            <>
-                <td>Min: {min}, Max: {max}</td>
-                <td>Questions: {questionsText.toString()}</td>
-            </>
-        ),
-
-        "sum-of-answers": ({validSum, questionsText}) => (
-            <>
-                <td>Valid Sum: {validSum}</td>
-                <td>Questions: {questionsText.toString()}</td>
-            </>
-        ),
-
-        "matching-sums": ({questionSetText1, questionSetText2}) => (
-            <>
-                <td>Questions Set 1: {questionSetText1.toString()}</td>
-                <td>Questions Set 2: {questionSetText2.toString()}</td>
-            </>
-        ),
-
-        "incompatible-answers": ({questionText1, answerText1, questionText2, answerText2}) => (
-            <>
-                <td>Question 1: {questionText1}, Answer 1: {answerText1}</td>
-                <td>Question 2: {questionText2}, Answer 2: {answerText2}</td>
-            </>
-        )
-    };
-
-    renderRuleRow = (rule, uid) => {
+    renderRuleRow = r => {
         const {inDesignMode} = this.props;
-        const {id, ruleType} = rule;
         return (
-            <tr key={uid} id={"rule" + id}>
-                {inDesignMode
-                    && <td>{this.removeButton(id)}</td>}
-                <td>{"Rule " + id}</td>
-                <td>Type: {this.ruleTypeLabel[ruleType]}</td>
-                {this.ruleSpecificColumns[ruleType].call(null, rule)}
-            </tr>
+            <div key={r.id} style={{display: "flex", alignItems: "center"}}>
+                {inDesignMode && this.removeButton(r.id)}
+                {(r.questionId
+                    ? r.regex
+                        ? <RegexRule key={r.id} {...r}/>
+                        : <MinMaxRule key={r.id} {...r}/>
+                    : r.questions
+                        ? <EqualToSumRule key={r.id} {...r}/>
+                        : r.questionSetIds1
+                            ? <MatchingSumsRule key={r.id} {...r}/>
+                            : <IncompatibleRule key={r.id} {...r}/>
+                )}
+            </div>
         );
     };
 
@@ -99,18 +67,10 @@ export class SurveyRulesList extends React.Component {
         const {surveyRules} = this.props;
         return (
             <>
-                <label className="font-weight-bold">Rules:</label>
+                <h2>Rules</h2>
                 {(surveyRules || []).length > 0
                     ? (
-                        <table
-                            className="srd"
-                            id="rules"
-                            style={{width: "100%"}}
-                        >
-                            <tbody>
-                                {surveyRules.map(this.renderRuleRow)}
-                            </tbody>
-                        </table>
+                        <div>{surveyRules.map(this.renderRuleRow)}</div>
                     ) : <label className="ml-3">No rules have been created for this survey.</label>}
             </>
         );

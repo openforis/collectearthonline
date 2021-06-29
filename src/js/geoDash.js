@@ -1179,7 +1179,7 @@ class MapWidget extends React.Component {
     getStretchToggle = () => (this.props.degDataType === "landsat"
         ? (
             <div className="col-6">
-                <span className="ctrlText font-weight-bold">Bands: </span>
+                <span className="ctrl-text font-weight-bold">Bands: </span>
                 <select
                     className="form-control"
                     onChange={evt => this.setStretch(evt)}
@@ -1199,21 +1199,21 @@ class MapWidget extends React.Component {
         : this.props.isDegradation
             ? (
                 <div className="col-6">
-                    <span className="ctrlText font-weight-bold">Band Combination: </span>
-                    <span className="ctrlText">VV, VH, VV/VH </span>
+                    <span className="ctrl-text font-weight-bold">Band Combination: </span>
+                    <span className="ctrl-text">VV, VH, VV/VH </span>
                 </div>
             )
             : "");
 
     getDegDataTypeToggle = () => (
         <div className="col-6" style={{display: this.props.isDegradation ? "block" : "none"}}>
-            <span className="ctrlText font-weight-bold">Data: </span>
-            <span className="ctrlText">LANDSAT </span>
+            <span className="ctrl-text font-weight-bold">Data: </span>
+            <span className="ctrl-text">LANDSAT </span>
             <label className="switch">
                 <input onChange={evt => this.toggleDegDataType(evt.target.checked)} type="checkbox"/>
                 <span className="switchslider round"/>
             </label>
-            <span className="ctrlText"> SAR</span>
+            <span className="ctrl-text"> SAR</span>
         </div>
     );
 

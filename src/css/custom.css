@@ -637,19 +637,6 @@ ul.samplevalue {
     background-color: #f8f9fa;
 }
 
-/* FIXME, move any remaining css to geo-dash.css as necessary */
-/*******************************/
-/* Geo Dash Widget Editor Page */
-/*******************************/
-.container-fluid.widgetEditor {
-    width: 100%;
-}
-.active-widget {
-    opacity: .5;
-    outline: 4px dotted #ecbc0d;
-    outline-offset: 5px;
-}
-
 /****************************/
 /* Project Creation Spinner */
 /****************************/

@@ -54,7 +54,8 @@ class Project extends React.Component {
             originalProject: {},
             institutionImagery: [],
             designMode: "loading",
-            modalMessage: null
+            modalMessage: null,
+            wizardStep: "overview"
         };
     }
 
@@ -140,7 +141,8 @@ class Project extends React.Component {
                     setProjectDetails: this.setProjectDetails,
                     setContextState: this.setContextState,
                     resetProject: this.resetProject,
-                    processModal: this.processModal
+                    processModal: this.processModal,
+                    wizardStep: this.state.wizardStep
                 }}
             >
                 {this.state.modalMessage && <LoadingModal message={this.state.modalMessage}/>}

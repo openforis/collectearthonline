@@ -101,7 +101,6 @@ export default class CreateProjectWizard extends React.Component {
         };
 
         this.state = {
-            step: "overview",
             complete: new Set(),
             templateProject: {},
             templatePlots: [],
@@ -348,27 +347,27 @@ export default class CreateProjectWizard extends React.Component {
     };
 
     tryChangeStep = (newStep, alertUser = true) => {
-        const errorList = this.getSteps()[this.state.step].validate();
+        const errorList = this.getSteps()[this.context.wizardStep].validate();
         this.setState({
             complete: errorList.length > 0
-                ? removeFromSet(this.state.complete, this.state.step)
-                : this.state.complete.add(this.state.step)
+                ? removeFromSet(this.state.complete, this.context.wizardStep)
+                : this.state.complete.add(this.context.wizardStep)
         });
         if (alertUser && errorList.length > 0) {
             alert(errorList.join("\n"));
         } else {
-            this.setState({step: newStep});
+            this.context.setContextState({wizardStep: newStep});
         }
     };
 
     nextStep = () => {
         const stepKeys = Object.keys(this.getSteps());
-        this.tryChangeStep(stepKeys[Math.min(stepKeys.length - 1, stepKeys.indexOf(this.state.step) + 1)]);
+        this.tryChangeStep(stepKeys[Math.min(stepKeys.length - 1, stepKeys.indexOf(this.context.wizardStep) + 1)]);
     };
 
     prevStep = () => {
         const stepKeys = Object.keys(this.getSteps());
-        this.tryChangeStep(stepKeys[Math.max(0, stepKeys.indexOf(this.state.step) - 1)], false);
+        this.tryChangeStep(stepKeys[Math.max(0, stepKeys.indexOf(this.context.wizardStep) - 1)], false);
     };
 
     finish = () => {
@@ -383,7 +382,7 @@ export default class CreateProjectWizard extends React.Component {
                 }
             });
         if (failedStep) {
-            this.setState({step: failedStep[0]});
+            this.context.setContextState({wizardStep: failedStep[0]});
         } else {
             this.context.setContextState({designMode: "review"});
         }
@@ -430,7 +429,7 @@ export default class CreateProjectWizard extends React.Component {
     renderStep = stepName => {
         const steps = this.getSteps();
         const isLast = last(Object.keys(steps)) === stepName;
-        const isSelected = stepName === this.state.step;
+        const isSelected = stepName === this.context.wizardStep;
         const stepComplete = this.state.complete.has(stepName);
         const stepColor = isSelected ? "blue" : stepComplete ? "green" : "gray";
         return (
@@ -475,8 +474,8 @@ export default class CreateProjectWizard extends React.Component {
 
     render() {
         const steps = this.getSteps();
-        const {description, StepComponent, helpDescription, StepHelpComponent} = steps[this.state.step];
-        const isLast = last(Object.keys(steps)) === this.state.step;
+        const {description, StepComponent, helpDescription, StepHelpComponent} = steps[this.context.wizardStep];
+        const isLast = last(Object.keys(steps)) === this.context.wizardStep;
         return (
             <div
                 className="d-flex pb-5 full-height align-items-center flex-column"

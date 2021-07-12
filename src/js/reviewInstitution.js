@@ -1,6 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
+import Alert from "./components/Alert";
+import ConfirmModal from "./components/ConfirmModal";
 import InstitutionEditor from "./components/InstitutionEditor";
 import {LoadingModal, NavigationBar} from "./components/PageComponents";
 import {
@@ -385,7 +387,7 @@ class ImageryList extends React.Component {
             .catch(response => {
                 this.setState({imageryList: []});
                 console.log(response);
-                alert("Error retrieving the imagery list. See console for details.");
+                this.showAlert({title: "Error", body: "Error retrieving the imagery list. See console for details."});
             });
     };
 
@@ -396,36 +398,35 @@ class ImageryList extends React.Component {
         if (imageryOptions.find(io => io.type === imagery.sourceConfig.type)) {
             this.setState({imageryToEdit: imagery});
         } else {
-            alert("This imagery type is no longer supported and cannot be edited.");
+            this.showAlert({title: "Imagery Not Supported", body: "This imagery type is no longer supported and cannot be edited."});
         }
     };
 
     deleteImagery = imageryId => {
-        if (confirm("Do you REALLY want to delete this imagery?")) {
-            fetch(
-                "/archive-institution-imagery",
-                {
-                    method: "POST",
-                    headers: {
-                        "Accept": "application/json",
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        institutionId: this.props.institutionId,
-                        imageryId
-                    })
+        this.setState({showDeleteImageryModal: false});
+        fetch(
+            "/archive-institution-imagery",
+            {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    institutionId: this.props.institutionId,
+                    imageryId
+                })
+            }
+        )
+            .then(response => {
+                if (response.ok) {
+                    this.getImageryList();
+                    this.showAlert({title: "Imagery Deleted", body: "Imagery has been successfully deleted."});
+                } else {
+                    console.log(response);
+                    this.showAlert({title: "Error", body: "Error deleting imagery. See console for details."});
                 }
-            )
-                .then(response => {
-                    if (response.ok) {
-                        this.getImageryList();
-                        alert("Imagery has been successfully deleted.");
-                    } else {
-                        console.log(response);
-                        alert("Error deleting imagery. See console for details.");
-                    }
-                });
-        }
+            });
     };
 
     toggleVisibility = (imageryId, currentVisibility) => {
@@ -450,10 +451,10 @@ class ImageryList extends React.Component {
                 .then(response => {
                     if (response.ok) {
                         this.getImageryList();
-                        alert("Imagery visibility has been successfully updated.");
+                        this.showAlert({title: "Imagery Updated", body: "Imagery visibility has been successfully updated."});
                     } else {
                         console.log(response);
-                        alert("Error updating imagery visibility. See console for details.");
+                        alert({title: "Error", body: "Error updating imagery visibility. See console for details."});
                     }
                 });
         }
@@ -467,6 +468,23 @@ class ImageryList extends React.Component {
 
     titleIsTaken = (newTitle, idToExclude) =>
         this.state.imageryList.some(i => i.title === newTitle && i.id !== idToExclude);
+
+    showDeleteImageryModal = id =>
+        this.setState({showDeleteImageryModal: true, deleteImageryId: id});
+
+    showAlert = ({title, body, closeText}) => this.setState({
+        showAlert: true,
+        alertTitle: title,
+        alertBody: body,
+        alertCloseText: closeText
+    });
+
+    hideAlert = () => this.setState({
+        showAlert: false,
+        alertTitle: null,
+        alertBody: null,
+        alertCloseText: null
+    });
 
     render() {
         return this.props.isVisible && (
@@ -506,13 +524,31 @@ class ImageryList extends React.Component {
                                 <Imagery
                                     key={id}
                                     canEdit={this.props.isAdmin && this.props.institutionId === institution}
-                                    deleteImagery={() => this.deleteImagery(id)}
+                                    deleteImagery={() => this.showDeleteImageryModal(id)}
                                     selectEditImagery={() => this.selectEditImagery(id)}
                                     title={title}
                                     toggleVisibility={() => this.toggleVisibility(id, visibility)}
                                     visibility={visibility}
                                 />
                             ))}
+                        {this.state.showDeleteImageryModal && (
+                            <ConfirmModal
+                                body="Are you sure you want to delete this imagery? This is irreversible."
+                                closeText="Cancel"
+                                danger
+                                onClose={() => this.setState({showDeleteImageryModal: false})}
+                                onConfirm={() => this.deleteImagery(this.state.deleteImageryId)}
+                                title="Warning: Removing Imagery"
+                            />
+                        )}
+                        {this.state.showAlert && (
+                            <Alert
+                                body={this.state.alertBody}
+                                closeText={this.state.alertCloseText}
+                                onClose={this.hideAlert}
+                                title={this.state.alertTitle}
+                            />
+                        )}
                     </>
                 )
         );

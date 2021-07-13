@@ -258,6 +258,8 @@ class InstitutionDescription extends React.Component {
             <div className="col-6">
                 <button
                     className="btn btn-sm btn-outline-lightgreen btn-block mt-0"
+                    disabled={this.state.newInstitutionDetails.name === ""
+                        || this.state.newInstitutionDetails.description === ""}
                     onClick={this.updateInstitution}
                     type="button"
                 >

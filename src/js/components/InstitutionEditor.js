@@ -1,5 +1,6 @@
 import React from "react";
 import {encodeFileAsBase64} from "../utils/generalUtils";
+import RequiredInput from "./RequiredInput";
 
 export default function InstitutionEditor({
     title,
@@ -17,13 +18,10 @@ export default function InstitutionEditor({
                     {title}
                 </h2>
                 <div className="mb-3">
-                    <label htmlFor="institution-name">Name</label>
-                    <input
-                        className="form-control mb-1 mr-sm-2"
-                        id="institution-name"
+                    <RequiredInput
+                        label="Name"
                         maxLength="400"
                         onChange={e => setInstitutionDetails("name", e.target.value)}
-                        type="text"
                         value={name}
                     />
                 </div>
@@ -38,27 +36,28 @@ export default function InstitutionEditor({
                         value={url}
                     />
                 </div>
-                <div className="mb-3">
-                    <label htmlFor="institution-logo">Logo</label>
-                    <input
-                        accept="image/*"
-                        className="form-control mb-1 mr-sm-2"
-                        id="institution-logo"
-                        onChange={e => {
-                            setInstitutionDetails("logo", e.target.files[0].name);
-                            encodeFileAsBase64(e.target.files[0], r => setInstitutionDetails("base64Image", r));
-                        }}
-                        type="file"
-                    />
+                <div className="mb-3 ">
+                    <label>Logo</label>
+                    <div className="custom-file">
+                        <input
+                            accept="image/*"
+                            className="custom-file-input mb-1 mr-sm-2"
+                            id="institution-logo"
+                            onChange={e => {
+                                setInstitutionDetails("logo", e.target.files[0].name);
+                                encodeFileAsBase64(e.target.files[0], r => setInstitutionDetails("base64Image", r));
+                            }}
+                            type="file"
+                        />
+                        <label className="custom-file-label" htmlFor="institution-logo">Choose image...</label>
+                    </div>
                 </div>
                 <div className="mb-3">
-                    <label htmlFor="institution-description">Description</label>
-                    <textarea
-                        className="form-control"
-                        id="institution-description"
+                    <RequiredInput
+                        label="Description"
                         maxLength="2000"
                         onChange={e => setInstitutionDetails("description", e.target.value)}
-                        rows="4"
+                        textarea
                         value={description}
                     />
                 </div>
@@ -72,7 +71,7 @@ export default function InstitutionEditor({
                             type="checkbox"
                         />
                         <label className="form-check-label" htmlFor="tos-check">
-                            I agree to the <a href="/terms" target="_blank">Terms of Service</a>.
+                            <span style={{color: "red"}}>*</span>I agree to the <a href="/terms" target="_blank">Terms of Service</a>.
                         </label>
                     </div>
                 )}

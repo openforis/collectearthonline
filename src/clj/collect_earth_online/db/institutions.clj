@@ -4,6 +4,11 @@
             [collect-earth-online.database         :refer [call-sql sql-primitive]]
             [collect-earth-online.views            :refer [data-response]]))
 
+;;; Constants
+
+(def ^:private max-name-lenth 400)
+(def ^:private max-description-length 2000)
+
 (defn is-inst-admin? [user-id institution-id]
   (and (pos? user-id)
        (pos? institution-id)
@@ -29,14 +34,37 @@
                         :base64Image      base64_image})) ; base64Image is last so it does not appear in the logs.
       (data-response (str "Institution " institution-id " is not found.")))))
 
+(defn- check-inputs [name description]
+  (cond
+    (or (nil? name) (= name ""))
+    (data-response (str "Name is required."))
+
+    (> (count description) max-name-lenth)
+    (data-response (str "Institution name must not exceed " max-name-lenth " characters."))
+
+    (or (nil? description) (= description ""))
+    (data-response (str "Description is required."))
+
+    (> (count description) max-description-length)
+    (data-response (str "Institution description must not exceed " max-description-length " characters."))))
+
+(defn- get-create-errors [name description]
+  (let [input-error (check-inputs name description)]
+    (cond
+      input-error
+      input-error
+
+      (sql-primitive (call-sql "institution_name_taken" name -1))
+      (data-response (str "Institution with the name " name " already exists.")))))
+
 (defn create-institution [{:keys [params]}]
   (let [user-id      (:userId params -1)
         name         (:name params)
         base64-image (:base64Image params)
         url          (:url params)
         description  (:description params)]
-    (if (sql-primitive (call-sql "institution_name_taken" name -1))
-      (data-response (str "Institution with the name " name " already exists."))
+    (if-let [error-message (get-create-errors name description)]
+      (data-response error-message)
       (if-let [institution-id (sql-primitive (call-sql "add_institution" name url description))]
         (do
           (when (pos? (count base64-image))
@@ -46,13 +74,17 @@
           (data-response institution-id))
         (data-response "")))))
 
-(defn- get-update-errors [institution-id user-id name]
-  (cond
-    (nil? (first (call-sql "select_institution_by_id" institution-id user-id)))
-    (str "Institution " institution-id " is not found.")
+(defn- get-update-errors [institution-id user-id name description]
+  (let [input-error (check-inputs name description)]
+    (cond
+      input-error
+      input-error
 
-    (sql-primitive (call-sql "institution_name_taken" name institution-id))
-    (str "Institution with the name " name " already exists.")))
+      (nil? (first (call-sql "select_institution_by_id" institution-id user-id)))
+      (str "Institution " institution-id " is not found.")
+
+      (sql-primitive (call-sql "institution_name_taken" name institution-id))
+      (str "Institution with the name " name " already exists."))))
 
 (defn update-institution [{:keys [params]}]
   (let [user-id        (:userId params -1)
@@ -61,7 +93,7 @@
         base64-image   (:base64Image params)
         url            (:url params)
         description    (:description params)]
-    (if-let [error-message (get-update-errors institution-id user-id name)]
+    (if-let [error-message (get-update-errors institution-id user-id name description)]
       (data-response error-message)
       (do
         (call-sql "update_institution" institution-id name url description)

@@ -367,6 +367,7 @@
                     (str/split hr #",")
                     (mapv #(-> %
                                (str/upper-case)
+                               (str/replace "\uFEFF" "")
                                (str/replace #"-| " "_")
                                (str/replace #"^(X|LONGITUDE|LONG|CENTER_X)$" "LON")
                                (str/replace #"^(Y|LATITUDE|CENTER_Y)$" "LAT"))

@@ -94,3 +94,9 @@
   (doto (PGobject.)
     (.setType "uuid")
     (.setValue str)))
+
+;; TODO use general form for the above two
+(defn str->pg [str pg-type]
+  (doto (PGobject.)
+    (.setType pg-type)
+    (.setValue str)))

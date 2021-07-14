@@ -1178,7 +1178,7 @@ mercator.samplesToVectorSource = samples => {
     const features = samples.map(
         sample => new Feature({
             sampleId: sample.id,
-            geometry: mercator.parseGeoJson(sample.geom || sample.sampleGeom, true)
+            geometry: mercator.parseGeoJson(sample.sampleGeom, true)
         })
     );
     return new VectorSource({features});

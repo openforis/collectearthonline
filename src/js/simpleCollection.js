@@ -303,10 +303,10 @@ class SimpleCollection extends React.Component {
         this.setState({currentImagery, imageryAttribution: currentImagery.attribution});
     };
 
-    getPlotData = plotId => this.processModal(
-        `${this.state.localeText.gettingPlot} ${plotId}`,
+    getPlotData = visibleId => this.processModal(
+        `${this.state.localeText.gettingPlot} ${visibleId}`,
         () => fetch("/get-plot-by-id?" + getQueryString({
-            plotId,
+            visibleId,
             projectId: this.props.projectId,
             navigationMode: this.state.navigationMode
         }))
@@ -315,7 +315,7 @@ class SimpleCollection extends React.Component {
                 if (data === "done") {
                     alert(this.state.localeText.navPlot);
                 } else if (data === "not-found") {
-                    alert(this.state.localeText.plotNotFound.replace("{0}", plotId));
+                    alert(this.state.localeText.plotNotFound.replace("{0}", visibleId));
                 } else {
                     this.setState({
                         currentPlot: data,
@@ -331,17 +331,17 @@ class SimpleCollection extends React.Component {
             })
     );
 
-    getNextPlotData = plotId => this.processModal(
-        plotId >= 0 ? this.state.localeText.gettingNextPlot : this.state.localeText.gettingFirstPlot,
+    getNextPlotData = visibleId => this.processModal(
+        visibleId >= 0 ? this.state.localeText.gettingNextPlot : this.state.localeText.gettingFirstPlot,
         () => fetch("/get-next-plot?" + getQueryString({
-            plotId,
+            visibleId,
             projectId: this.props.projectId,
             navigationMode: this.state.navigationMode
         }))
             .then(response => (response.ok ? response.json() : Promise.reject(response)))
             .then(data => {
                 if (data === "done") {
-                    if (plotId === -1) {
+                    if (visibleId === -1) {
                         alert(this.state.navigationMode === "unanalyzed"
                             ? this.state.localeText.navNextUn
                             : this.state.localeText.navNextAn);
@@ -353,7 +353,7 @@ class SimpleCollection extends React.Component {
                     this.setState({
                         currentPlot: data,
                         ...this.newPlotValues(data),
-                        prevPlotButtonDisabled: plotId === -1
+                        prevPlotButtonDisabled: visibleId === -1
                     });
                 }
             })
@@ -363,10 +363,10 @@ class SimpleCollection extends React.Component {
             })
     );
 
-    getPrevPlotData = plotId => this.processModal(
+    getPrevPlotData = visibleId => this.processModal(
         this.state.localeText.gettingPrevPlot,
         () => fetch("/get-prev-plot?" + getQueryString({
-            plotId,
+            visibleId,
             projectId: this.props.projectId,
             navigationMode: this.state.navigationMode
         }))
@@ -394,7 +394,7 @@ class SimpleCollection extends React.Component {
     resetPlotValues = () => this.setState(this.newPlotValues(this.state.currentPlot, false));
 
     newPlotValues = (newPlot, copyValues = true) => ({
-        newPlotInput: isNumber(newPlot.plotId) ? newPlot.plotId : newPlot.id,
+        newPlotInput: isNumber(newPlot.visibleId) ? newPlot.visibleId : newPlot.id,
         userSamples: newPlot.samples
             ? newPlot.samples.reduce((acc, cur) =>
                 ({...acc, [cur.id]: copyValues ? (cur.savedAnswers || {}) : {}}), {})
@@ -427,11 +427,11 @@ class SimpleCollection extends React.Component {
             mapConfig,
             "currentPlot",
             mercator.geometryToVectorSource(
-                currentPlot.geom
-                    ? mercator.parseGeoJson(currentPlot.geom, true)
-                    : mercator.getPlotPolygon(currentPlot.center,
+                currentPlot.plotGeom.includes("Point")
+                    ? mercator.getPlotPolygon(currentPlot.plotGeom,
                                               currentProject.plotSize,
                                               currentProject.plotShape)
+                    : mercator.parseGeoJson(currentPlot.plotGeom, true)
             ),
             mercator.ceoMapStyles("geom", "yellow")
         );
@@ -469,13 +469,9 @@ class SimpleCollection extends React.Component {
 
     navToFirstPlot = () => this.getNextPlotData(-10000000);
 
-    getPlotId = () => (isNumber(this.state.currentPlot.plotId)
-        ? this.state.currentPlot.plotId
-        : this.state.currentPlot.id);
+    navToNextPlot = () => this.getNextPlotData(this.state.currentPlot.visibleId);
 
-    navToNextPlot = () => this.getNextPlotData(this.getPlotId());
-
-    navToPrevPlot = () => this.getPrevPlotData(this.getPlotId());
+    navToPrevPlot = () => this.getPrevPlotData(this.state.currentPlot.visibleId);
 
     navToPlot = newPlot => {
         if (!isNaN(newPlot)) {
@@ -702,8 +698,6 @@ class SimpleCollection extends React.Component {
 
     render() {
         const {imageryAttribution} = this.state;
-        const plotId = this.getPlotId();
-
         const infoStyle = {
             position: "absolute",
             top: "0px",
@@ -796,9 +790,9 @@ class SimpleCollection extends React.Component {
                                 navToPlot={this.navToPlot}
                                 navToPrevPlot={this.navToPrevPlot}
                                 nextPlotButtonDisabled={this.state.nextPlotButtonDisabled}
-                                plotId={plotId}
                                 prevPlotButtonDisabled={this.state.prevPlotButtonDisabled}
                                 setNavigationMode={this.setNavigationMode}
+                                visibleId={this.state.currentPlot.visibleId}
                             />
                             <div className="my-3"/>
                             <ImageryOptions
@@ -817,7 +811,11 @@ class SimpleCollection extends React.Component {
                             {!this.state.isMobile && this.state.KMLFeatures && (
                                 <a
                                     className="btn btn-outline-lightgreen btn-sm btn-block my-2"
-                                    download={"ceo_projectId-" + this.state.currentProject.id + "_plotId-" + plotId + ".kml"}
+                                    download={"ceo_projectId-"
+                                        + this.state.currentProject.id
+                                        + "_plotId-"
+                                        + this.state.currentPlot.visibleId
+                                        + ".kml"}
                                     href={"data:earth.kml+xml application/vnd.google-earth.kmz, "
                                         + encodeURIComponent(this.state.KMLFeatures)}
                                 >
@@ -941,7 +939,7 @@ class PlotNavigation extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (this.props.plotId !== prevProps.plotId) this.setState({newPlotInput: this.props.plotId});
+        if (this.props.visibleId !== prevProps.visibleId) this.setState({newPlotInput: this.props.visibleId});
     }
 
     updateNewPlotId = value => this.setState({newPlotInput: value});

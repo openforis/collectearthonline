@@ -1,30 +1,5 @@
 -- Validate and then move to functions where it can run every time the server is re-deployed
 
--- Clean up any orphaned tables
-DO $$
- DECLARE
-    _sql text;
- BEGIN
-    SELECT INTO _sql
-        string_agg(format('DROP TABLE ext_tables.%s;', table_name), E'\n')
-    FROM (
-        SELECT table_name,
-            (SELECT project_uid FROM projects WHERE plots_ext_table = table_name) as p,
-            (SELECT project_uid FROM projects WHERE samples_ext_table = table_name) as s
-        FROM information_schema.tables
-        WHERE table_schema='ext_tables'
-            AND table_type='BASE TABLE'
-    ) a
-    WHERE p is null and s is null;
-
-    IF _sql IS NOT NULL THEN
-        EXECUTE _sql;
-    ELSE
-        RAISE NOTICE 'No orphaned tables found.';
-    END IF;
- END
-$$ LANGUAGE plpgsql;
-
 -- Archive malformed projects
 SELECT (SELECT archive_project(project_uid))
 FROM projects

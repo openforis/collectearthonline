@@ -26,7 +26,7 @@ function Question({text}) {
             &quot;{(textIsArray ? truncjoin(text) : truncate(text, 15))}&quot;
             {(textIsArray || text.length >= 15)
                 && (
-                    <span className="tooltip_content" style={{"font-size": "0.8rem"}}>
+                    <span className="tooltip_content" style={{"fontSize": "0.8rem"}}>
                         {textIsArray ? text.join(", ") : text}
                     </span>
                 )}

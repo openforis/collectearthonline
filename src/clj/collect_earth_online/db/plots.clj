@@ -21,9 +21,10 @@
 
 (defn get-plot-sample-geom [{:keys [params]}]
   (let [plot-id (tc/val->int (:plotId params))]
-    (data-response (if-let [geom (sql-primitive (call-sql "select_plot_geom" plot-id))]
-                     {:geom    geom
-                      :samples (call-sql "select_plot_sample_geoms" plot-id)}
+    (data-response (if-let [plot-geom (sql-primitive (call-sql "select_plot_geom" plot-id))]
+                     {:plotGeom     plot-geom
+                      :samplesGeoms (mapv :sample_geom
+                                          (call-sql "select_plot_sample_geoms" plot-id))}
                      ""))))
 
 (defn- unlock-plots [user-id]
@@ -39,53 +40,55 @@
   (unlock-plots (:userId params -1))
   (data-response ""))
 
-(defn- prepare-samples-array [plot-id project-id]
-  (mapv (fn [{:keys [sample_id sample_geom sampleid geom saved_answers]}]
+(defn- prepare-samples-array [plot-id]
+  (mapv (fn [{:keys [sample_id sample_geom saved_answers]}]
           {:id           sample_id
            :sampleGeom   sample_geom
-           :sampleId     sampleid ;TODO I don't think we distinguish between sample_id and sampleId so this could go away
-           :geom         geom
            :savedAnswers (tc/jsonb->clj saved_answers)})
-        (call-sql "select_plot_samples" plot-id project-id)))
+        (call-sql "select_plot_samples" plot-id)))
 
 (defn- get-collection-plot [params method]
   (let [navigation-mode (:navigationMode params "unanalyzed")
         project-id      (tc/val->int (:projectId params))
-        plot-id         (tc/val->int (:plotId params))
+        visible-id      (tc/val->int (:visibleId params))
         user-id         (:userId params -1)
         review-all?     (and (= "all" navigation-mode)
                              (is-proj-admin? user-id project-id nil))]
     (data-response (if-let [plot-info (first (if (= "unanalyzed" navigation-mode)
                                                (call-sql (str "select_" method "unassigned_plot")
                                                          project-id
-                                                         plot-id)
+                                                         visible-id)
                                                (call-sql (str "select_" method "user_plot")
                                                          project-id
-                                                         plot-id
+                                                         visible-id
                                                          user-id
                                                          review-all?)))]
-                     (let [{:keys [plot_id center flagged confidence flagged_reason plotid geom extra_plot_info]} plot-info]
+                     (let [{:keys [plot_id
+                                   flagged
+                                   confidence
+                                   flagged_reason
+                                   plot_geom
+                                   extra_plot_info
+                                   visible_id]} plot-info]
                        (unlock-plots user-id)
                        (call-sql "lock_plot"
                                  (:plot_id plot-info)
                                  user-id
                                  (time-plus-five-min))
                        {:id            plot_id
-                        :center        center
                         :flagged       flagged
                         :flaggedReason (or flagged_reason "")
                         :confidence    (or confidence 100)
-                        :plotId        plotid
-                        :geom          geom
-                        :extraPlotInfo (-> (tc/jsonb->clj extra_plot_info {})
-                                           (dissoc :gid :lat :lon :plotid))
-                        :samples       (prepare-samples-array plot_id project-id)})
+                        :visibleId     visible_id
+                        :plotGeom      plot_geom
+                        :extraPlotInfo (tc/jsonb->clj extra_plot_info {})
+                        :samples       (prepare-samples-array plot_id)})
                      "done"))))
 
 (defn get-plot-by-id [{:keys [params]}]
   (let  [project-id (tc/val->int (:projectId params))
-         plot-id    (tc/val->int (:plotId params))]
-    (if (sql-primitive (call-sql "plot_exists" project-id plot-id))
+         visible-id (tc/val->int (:visibleId params))]
+    (if (sql-primitive (call-sql "plot_exists" project-id visible-id))
       (get-collection-plot params "by_id_")
       (data-response "not-found"))))
 

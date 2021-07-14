@@ -5,5 +5,3 @@ CREATE DATABASE ceo WITH OWNER ceo;
 \c ceo
 CREATE EXTENSION postgis;
 CREATE EXTENSION pgcrypto;
--- Schema for external tables
-CREATE SCHEMA ext_tables AUTHORIZATION ceo;

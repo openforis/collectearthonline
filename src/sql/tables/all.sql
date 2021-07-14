@@ -77,8 +77,6 @@ CREATE TABLE projects (
     sample_resolution      real,
     survey_questions       jsonb,
     survey_rules           jsonb,
-    plots_ext_table        text,
-    samples_ext_table      text,
     created_date           date,
     published_date         date,
     closed_date            date,
@@ -126,10 +124,11 @@ CREATE TABLE packet_users (
 --                   |plots -> many user_plots -> many sample_values <- samples|
 --                                       ^- users|
 CREATE TABLE plots (
-    plot_uid       SERIAL PRIMARY KEY,
-    project_rid    integer NOT NULL REFERENCES projects (project_uid) ON DELETE CASCADE ON UPDATE CASCADE,
-    center         geometry(Point,4326),
-    ext_id         integer
+    plot_uid           SERIAL PRIMARY KEY,
+    project_rid        integer NOT NULL REFERENCES projects (project_uid) ON DELETE CASCADE ON UPDATE CASCADE,
+    plot_geom          geometry(geometry,4326),
+    visible_id         integer,
+    extra_plot_info    jsonb
 );
 
 CREATE TABLE packet_plots (
@@ -143,10 +142,11 @@ CREATE TABLE packet_plots (
 --                   |plots -> many user_plots -> many sample_values <- samples|
 --                                       ^- users|
 CREATE TABLE samples (
-    sample_uid     SERIAL PRIMARY KEY,
-    plot_rid       integer NOT NULL REFERENCES plots (plot_uid) ON DELETE CASCADE ON UPDATE CASCADE,
-    sample_geom    geometry(geometry,4326),
-    ext_id         integer
+    sample_uid           SERIAL PRIMARY KEY,
+    plot_rid             integer NOT NULL REFERENCES plots (plot_uid) ON DELETE CASCADE ON UPDATE CASCADE,
+    sample_geom          geometry(geometry,4326),
+    visible_id           integer,
+    extra_sample_info    jsonb
 );
 
 -- Stores information about a plot as data is collected, including the user who collected it
